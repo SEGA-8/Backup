@@ -1,46 +1,87 @@
 param (
     [Alias("S","Source")]
     [Parameter(
-        Mandatory,
+        #Mandatory,
         Position = 0
     )]
     [string]$FileSourcePath = "C:\test",
     [Alias("D","Destination")]
     [Parameter(
-        Mandatory,
+        #Mandatory,
         Position = 1
     )]
     [string]$FileDestinationPath = "D:\test",
-    [string]$Update = $true
+    [string]$Update = $false,
+    [switch]$help
 )
 
+# Mostrar ayuda si se pasa el parámetro -h o -help
+if ($help) {
+    Write-Output "Ayuda del script:"
+    Write-Output "-h, -help      Muestra esta ayuda"
+    Write-Output "-param1        Descripción del parámetro 1"
+    Write-Output "-param2        Descripción del parámetro 2"
+    # Agrega más descripciones según sea necesario
+    exit
+}
+
 function CheckPath {
-    [CmdletBinding()]
+    #[CmdletBinding()]
     param (
             [Parameter(Mandatory = $true)]
-            [string] $Source
+            [string]$Source,
+            [Bool]$Create =$true
     )
     
     if (-not (Test-Path $Source)) {
-    Write-Host ("Error: The provided file path does not exist. {0}" -f $Source)
-    exit
+        Write-Host ("Error: The provided file path does not exist. {0}" -f $Source)
+        
+        if ($Create) {
+            do {
+            # Solicitar confirmación del usuario
+            $confirmation = Read-Host -Prompt 'Do you want to create it? (yes/no)'
+
+            # Validar la respuesta del usuario
+            if ($confirmation -eq 'yes' -or $confirmation -eq 'y') {
+                #Write-Output "Has confirmado que deseas continuar."
+                $continue = $true
+            }
+            elseif ($confirmation -eq 'no' -or $confirmation -eq 'n') {
+                #Write-Output "Has decidido no continuar."
+                $continue = $false
+            }
+            else {
+                Write-Output "Wrong answer, please try 'yes/y' or 'no/n'."
+                $continue = $null
+            }
+            } while ($continue -eq $null)
+
+            # Si $continue es $true, continua con el resto del script
+            if ($continue) {
+                mkdir $Source
+                continue
+            }
+
+        }
+        exit
     }
 }
 
-CheckPath -Source $FilePathSource
-CheckPath -Source $FilePathDestination
+ShowHelp $Help 
+CheckPath -Source $FileSourcePath -Create $false
+CheckPath -Source $FileDestinationPath
 
 # Obtener todas las carpetas en el directorio
 $folders = Get-ChildItem -Path $FileSourcePath -Directory
 
 # Crear la ruta de destino
-$DestinationPath = [String]::join("\",$FileDestinationPath,"CA200\Archive")
-New-Item -Path $DestinationPath -Force -ItemType Directory
+#$DestinationPath = [String]::join("\",$FileDestinationPath,"CA200\Archive")
+New-Item -Path $FileDestinationPath -Force -ItemType Directory
 
 foreach ($folder in $folders) {
     #$zipFilePath = Join-Path -Path $directory -ChildPath "$($folder.Name).zip"
     $ZipFileName = "$($folder.Name).zip"
-    $zipFilePath = [String]::Join("\",$DestinationPath, $ZipFileName)
+    $zipFilePath = [String]::Join("\",$FileDestinationPath, $ZipFileName)
     $folderPath = $folder.FullName
 
     #Crear el archivo zip
