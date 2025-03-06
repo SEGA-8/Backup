@@ -1,2 +1,2 @@
 # Backup
-Backup de carpetas en PowerShell
+Backup de carpetas en PowerShell script
