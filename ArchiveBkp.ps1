@@ -11,17 +11,27 @@ param (
         Position = 1
     )]
     [string]$FileDestinationPath = "D:\test",
-    [string]$Update = $false,
+    [switch]$Update,
+    [switch]$Force,
     [switch]$help
 )
 
 # Mostrar ayuda si se pasa el parámetro -h o -help
 if ($help) {
-    Write-Output "Ayuda del script:"
-    Write-Output "-h, -help      Muestra esta ayuda"
-    Write-Output "-param1        Descripción del parámetro 1"
-    Write-Output "-param2        Descripción del parámetro 2"
+    Write-Host "ArchiveBkp source [destination] [/U | /F]"
+    Write-Host "Ayuda de ArchiveBkp"
+    Write-Host "-h, -help      Muestra esta ayuda"
+    Write-Host "-source        Especifica los archivos por copiar."
+    Write-Host "-destination   Especifica la ubicacion de los nuevos archivos. Si se omite crea una por defecto."
+    Write-Host "-u             Actualiza creando nuevos ficheros. No sobreescribe los existentes"
+    Write-Host "-f             Fuerza la creacion de nuevos ficheros. Sobreescribe los existentes"
+
     # Agrega más descripciones según sea necesario
+    exit
+}
+
+if($Update -and $Force){
+    Write-Host "No es posible usar los parametros Update y Force juntos, debe elejir solo uno."
     exit
 }
 
@@ -67,7 +77,6 @@ function CheckPath {
     }
 }
 
-ShowHelp $Help 
 CheckPath -Source $FileSourcePath -Create $false
 CheckPath -Source $FileDestinationPath
 
@@ -87,11 +96,20 @@ foreach ($folder in $folders) {
     #Crear el archivo zip
     #Compress-Archive -Path "$folderPath\*" -Force -DestinationPath $zipFilePath
 
-    $parameter = @{
+    if ($Update){
+        $parameter = @{
         Path = $folderPath
-        CompressionLevel = "Fastest"
-        Update = [Bool]::Parse($Update)
         DestinationPath = $zipFilePath
+        CompressionLevel = "Fastest"
+        Update = $Update
+        }
+    }else{
+        $parameter = @{
+        Path = $folderPath
+        DestinationPath = $zipFilePath
+        CompressionLevel = "Fastest"
+        Force = $Force
+        }
     }
     Compress-Archive @parameter
 }
